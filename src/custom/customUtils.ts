@@ -7,6 +7,12 @@ const executablePath = (ServerOptions.createOptions as any).useChrome
   ? ChromeLauncher.Launcher.getFirstInstallation()
   : undefined
 
+export function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 export async function getBrowser(
   browserArgs: any,
   userDataDir: string,
@@ -21,7 +27,8 @@ export async function getBrowser(
   const browser = await puppeteer.launch({
     args: [...browserArgs, proxyUrl],
     userDataDir: userDataDir,
-    timeout: 10000,
+    timeout: 30000,
+    protocolTimeout: 360000,
     executablePath
   });
 
@@ -37,11 +44,7 @@ export async function getBrowser(
 }
 
 export async function chatIsOpen(client: WhatsAppServer, message: any): Promise<boolean> {
-  await new Promise((resolve) => {
-    setTimeout(() => {
-      resolve('')
-    }, 600);
-  })
+  await sleep(600)
 
   const chat = await client.getChatById(message.chatId)
   return chat.unreadCount == 0

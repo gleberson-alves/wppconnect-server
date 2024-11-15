@@ -94,6 +94,14 @@ export default class CreateSessionUtil {
             },
             onLoadingScreen: (percent: string, message: string) => {
               req.logger.info(`[${session}] ${percent}% - ${message}`);
+              callWebHook(client, req, 'loadScreen', {
+                session: client.session,
+                status: percent
+              });
+              req.io.emit('loadScreen', {
+                data: { percent },
+                session: client.session,
+              });
             },
             statusFind: (statusFind: string) => {
               try {
@@ -272,7 +280,9 @@ export default class CreateSessionUtil {
     await client.onMessage(async (message: any) => {
       eventEmitter.emit(`mensagem-${client.session}`, client, message);
 
-      message.chatIsOpen = await chatIsOpen(client, message)
+      message.chatIsOpen = client.botRun == true ?
+        await chatIsOpen(client, message)
+        : false
 
       callWebHook(client, req, 'onmessage', message);
       if (message.type === 'location')
@@ -370,6 +380,7 @@ export default class CreateSessionUtil {
         status: null,
         session: session,
       } as any;
+
     return client;
   }
 }
