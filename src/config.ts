@@ -1,7 +1,7 @@
 import { ServerOptions } from './types/ServerOptions';
 import { config } from 'dotenv'
 
-config({ debug: true })
+config({ override: true })
 
 export default {
   secretKey: process.env.SECRET_KEY,
@@ -11,11 +11,11 @@ export default {
   poweredBy: process.env.POWERED_BY,
   startAllSession: false,
   tokenStoreType: 'file',
-  maxListeners: 15,
+  maxListeners: 0,
   customUserDataDir: process.env.CUSTOM_USER_DADA_DIR,
   webhook: {
     url: null,
-    autoDownload: true,
+    autoDownload: false,
     uploadS3: false,
     readMessage: false,
     allUnreadOnStart: false,
@@ -49,14 +49,15 @@ export default {
     daysToArchive: 45,
   },
   log: {
-    level: 'silly', // Before open a issue, change level to silly and retry a action
+    level: 'info',//'silly', // Before open a issue, change level to silly and retry a action
     logger: ['console', 'file'],
   },
   createOptions: {
-    autoClose: 180000, //2 minutos
+    disableWelcome: true,
+    autoClose: 180000, //6 minutos
     waitForLogin: true,
     useChrome: process.env.USE_CHROME?.toLocaleLowerCase() == 'true',
-    whatsappVersion: process.env.WHATSAPP_VERSION,
+    //whatsappVersion: process.env.WHATSAPP_VERSION,
     browserArgs: [
       //'--proxy-server=144.91.73.88:3101',
       //'--proxy-auth=robozap:bm@23J6n$cm7',

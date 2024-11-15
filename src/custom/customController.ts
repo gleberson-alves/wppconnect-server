@@ -1,11 +1,15 @@
 import './customGlobal';
 import { Request, Response } from 'express';
 import { exec } from 'child_process';
+import CreateSessionUtil from '../util/createSessionUtil';
 
 export async function startBot(req: Request, res: Response) {
   try {
     const client = req.client;
     (client as any).config.webhook = req.body.webhook;
+    client.botRun = true
+    const sessionUtil = new CreateSessionUtil()
+    sessionUtil.listenMessages(client, req)
 
     res.json({
       status: 'success',
@@ -25,6 +29,10 @@ export async function stopBot(req: Request, res: Response) {
   try {
     const client = req.client;
     delete (client as any).config.webhook;
+    client.botRun = false
+    client.customEventDispose('onMessage')
+    client.customEventDispose('onAnyMessage')
+    client.customEventDispose('onIncomingCall')
 
     res.json({
       status: 'success',
@@ -43,17 +51,14 @@ export async function stopBot(req: Request, res: Response) {
 export async function forceKillSession(req: Request, res: Response) {
   try {
     const client = req.client;
-    if (!client.session) {
-      res.json({
-        status: 'error',
-        message: 'Sessão não existe no cliente',
-        error: new Error('missing client.session'),
-      });
 
-      return
-    }
+    try {
+      if (typeof client?.close == 'function') {
+        await client.close();
+      }
+    } catch (err) { }
 
-    const command = `ps aux | grep -- '--user-data-dir=.*/${client.session}' | grep -v grep | awk '{print $2}'`;
+    const command = `ps aux | grep -- '--user-data-dir=.*/${req.session}' | grep -v grep | awk '{print $2}'`;
 
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -76,10 +81,6 @@ export async function forceKillSession(req: Request, res: Response) {
         process.kill(Number(pid), 'SIGKILL');
       });
     });
-
-    if (typeof client.close == 'function') {
-      await client.close();
-    }
 
     res.json({
       status: 'success',
