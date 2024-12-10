@@ -1,30 +1,39 @@
 import { ServerOptions } from './types/ServerOptions';
+import { config } from 'dotenv'
+
+config({ override: true })
 
 export default {
-  secretKey: 'THISISMYSECURETOKEN',
-  host: 'http://localhost',
-  port: '21465',
-  deviceName: 'WppConnect',
-  poweredBy: 'WPPConnect-Server',
-  startAllSession: true,
+  secretKey: process.env.SECRET_KEY,
+  host: process.env.HOST,
+  port: process.env.PORT,
+  deviceName: process.env.DEVICE_NAME,
+  poweredBy: process.env.POWERED_BY,
+  startAllSession: false,
   tokenStoreType: 'file',
-  maxListeners: 15,
-  customUserDataDir: './userDataDir/',
+  maxListeners: 0,
+  customUserDataDir: process.env.CUSTOM_USER_DADA_DIR,
   webhook: {
     url: null,
-    autoDownload: true,
+    autoDownload: false,
     uploadS3: false,
-    readMessage: true,
+    readMessage: false,
     allUnreadOnStart: false,
-    listenAcks: true,
-    onPresenceChanged: true,
+    listenAcks: false,
+    onPresenceChanged: false,
     onParticipantsChanged: true,
     onReactionMessage: true,
     onPollResponse: true,
     onRevokedMessage: true,
     onLabelUpdated: true,
-    onSelfMessage: false,
-    ignore: ['status@broadcast'],
+    onSelfMessage: true,
+    ignore: [
+      'status@broadcast',
+      'onPresenceChanged',
+      'onUpdateLabel',
+      'onAnyMessage',
+      'onack'
+    ],
   },
   websocket: {
     autoDownload: false,
@@ -40,11 +49,18 @@ export default {
     daysToArchive: 45,
   },
   log: {
-    level: 'silly', // Before open a issue, change level to silly and retry a action
+    level: 'info',//'silly', // Before open a issue, change level to silly and retry a action
     logger: ['console', 'file'],
   },
   createOptions: {
+    disableWelcome: true,
+    autoClose: 180000, //6 minutos
+    waitForLogin: true,
+    useChrome: process.env.USE_CHROME?.toLocaleLowerCase() == 'true',
+    //whatsappVersion: process.env.WHATSAPP_VERSION,
     browserArgs: [
+      //'--proxy-server=144.91.73.88:3101',
+      //'--proxy-auth=robozap:bm@23J6n$cm7',
       '--disable-web-security',
       '--no-sandbox',
       '--disable-web-security',

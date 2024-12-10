@@ -35,6 +35,7 @@ import {
   startAllSessions,
 } from './util/functions';
 import { createLogger } from './util/logger';
+import './custom/index';
 
 //require('dotenv').config();
 
