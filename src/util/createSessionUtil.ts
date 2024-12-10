@@ -22,6 +22,7 @@ import chatWootClient from './chatWootClient';
 import { autoDownload, callWebHook, startHelper } from './functions';
 import { clientsArray, eventEmitter } from './sessionUtil';
 import Factory from './tokenStore/factory';
+import { chatIsOpen } from '../custom/customUtils';
 
 export default class CreateSessionUtil {
   startChatWootClient(client: any) {
@@ -71,14 +72,14 @@ export default class CreateSessionUtil {
             deviceName:
               client.config.phone == undefined // bug when using phone code this shouldn't be passed (https://github.com/wppconnect-team/wppconnect-server/issues/1687#issuecomment-2099357874)
                 ? client.config?.deviceName ||
-                  req.serverOptions.deviceName ||
-                  'WppConnect'
+                req.serverOptions.deviceName ||
+                'WppConnect'
                 : undefined,
             poweredBy:
               client.config.phone == undefined // bug when using phone code this shouldn't be passed (https://github.com/wppconnect-team/wppconnect-server/issues/1687#issuecomment-2099357874)
                 ? client.config?.poweredBy ||
-                  req.serverOptions.poweredBy ||
-                  'WPPConnect-Server'
+                req.serverOptions.poweredBy ||
+                'WPPConnect-Server'
                 : undefined,
             catchLinkCode: (code: string) => {
               this.exportPhoneCode(req, client.config.phone, code, client, res);
@@ -93,6 +94,14 @@ export default class CreateSessionUtil {
             },
             onLoadingScreen: (percent: string, message: string) => {
               req.logger.info(`[${session}] ${percent}% - ${message}`);
+              callWebHook(client, req, 'loadScreen', {
+                session: client.session,
+                status: percent
+              });
+              req.io.emit('loadScreen', {
+                data: { percent },
+                session: client.session,
+              });
             },
             statusFind: (statusFind: string) => {
               try {
@@ -115,7 +124,7 @@ export default class CreateSessionUtil {
                   session: client.session,
                 });
                 req.logger.info(statusFind + '\n\n');
-              } catch (error) {}
+              } catch (error) { }
             },
           }
         )
@@ -274,6 +283,11 @@ export default class CreateSessionUtil {
   async listenMessages(client: WhatsAppServer, req: Request) {
     await client.onMessage(async (message: any) => {
       eventEmitter.emit(`mensagem-${client.session}`, client, message);
+
+      message.chatIsOpen = client.botRun == true ?
+        await chatIsOpen(client, message)
+        : false
+
       callWebHook(client, req, 'onmessage', message);
       if (message.type === 'location')
         client.onLiveLocation(message.sender.id, (location) => {
@@ -370,6 +384,7 @@ export default class CreateSessionUtil {
         status: null,
         session: session,
       } as any;
+
     return client;
   }
 }
